@@ -13,7 +13,7 @@ npm install
 
 #### Running docker-compose 
 This will run the api on ports **15050** **5050**
-postgres and redis will also run
+postgres and rabbit will also run
 This might take a few minutes
  ~~~bash
 npm run up 
