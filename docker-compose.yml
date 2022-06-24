@@ -1,0 +1,73 @@
+version: "3.4"
+
+##Obs: esquema das portas >>  MINHA_PORTA:PORTA_DO_DOCKER
+
+services:
+  postgres:
+    container_name: 'postgres-container'
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    # caso queira persistir o dado, descomentar o volume abaixo.
+    # volumes: 
+    #   - ./PostgreSQL/:/var/lib/postgresql/data/
+
+  rabbitmq:
+    image: rabbitmq:3.8.19-management
+    restart: always  
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  api: ##<-- usando o dockerfile
+    container_name: 'api-container'
+    restart: always
+    build: .
+    image: ws-example
+    command: npm start
+    volumes:
+      - ./server/:/usr/src/app/server
+    ports: 
+      - "5050:5050"
+    links:
+      - postgres
+      - rabbitmq
+    environment:
+      PGUSER: "postgres"
+      PGHOST: "postgres"
+      PGPASSWORD: "postgres"
+      PGDATABASE: "/"      
+      PGPORT: "5432"
+
+
+  api2: ##<-- usando somente o docker-compose
+    container_name: 'api-container2'
+    restart: always
+    image: node:12
+    working_dir: /usr/src/app
+    command: bash -c "npm install && npm run debug"
+    volumes:
+      - ./package.json:/usr/src/app/package.json
+      - ./server/:/usr/src/app/server
+    ports: 
+      - "5051:5050"
+      - "9222:9222"
+    links:
+      - postgres
+      - rabbitmq
+    environment:
+      PGUSER: "postgres"
+      PGHOST: "postgres"
+      PGPASSWORD: "postgres"
+      PGDATABASE: "postgres"      
+      PGPORT: "5432"
